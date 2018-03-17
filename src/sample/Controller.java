@@ -24,6 +24,9 @@ import java.util.Map;
 
 public class Controller {
 
+    private ImageView imageViewToRemove;
+    private int integerToRemove;
+
     private MediaPlayer laserPlayer;
 
     private AnimationTimer playerAnimation;
@@ -122,9 +125,6 @@ public class Controller {
     public ImageView enemy27;
 
     @FXML
-    public ImageView dummy;
-
-    @FXML
     private void initialize() {
         enemies = new ArrayList<>();
         enemies.add(enemy1);
@@ -154,7 +154,6 @@ public class Controller {
         enemies.add(enemy25);
         enemies.add(enemy26);
         enemies.add(enemy27);
-        enemies.add(dummy);
         pairs = new HashMap<>();
         playerAnimation = new AnimationTimer() {
             @Override
@@ -205,18 +204,28 @@ public class Controller {
     }
 
     private void checkForCollision() {
+        boolean flag = false;
+        label:
         for (int i = 0; i < enemies.size(); i++) {
             for (ImageView imageView : pairs.keySet()) {
                 if (imageView.getBoundsInParent().intersects(enemies.get(i).getBoundsInParent())) {
                     pairs.get(imageView).stop();
                     gameComponents.getChildren().remove(imageView);
                     gameComponents.getChildren().remove(enemies.get(i));
-                    pairs.remove(imageView);
-                    enemies.remove(i);
+                    imageViewToRemove = imageView;
+                    integerToRemove = i;
+                    flag = true;
+                    break label;
                 }
             }
         }
-        if (enemies.size() == 1) {
+
+        if (flag == true) {
+            pairs.remove(imageViewToRemove);
+            enemies.remove(integerToRemove);
+        }
+
+        if (enemies.size() == 0) {
             playerAnimation.stop();
             Alert gameOver = new Alert(Alert.AlertType.INFORMATION);
             gameOver.setTitle("Game Over");
