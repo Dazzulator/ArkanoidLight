@@ -17,12 +17,13 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Controller {
+
+    int timer = 0;
+
+    private Random random;
 
     private ImageView imageViewToRemove;
     private int integerToRemove;
@@ -35,7 +36,8 @@ public class Controller {
     private DoubleProperty playerVelocity = new SimpleDoubleProperty();
     private LongProperty lastUpdateTime = new SimpleLongProperty();
     private List<ImageView> enemies;
-    private Map<ImageView, TranslateTransition> pairs;
+    private Map<ImageView, TranslateTransition> playerPairs;
+    private Map<ImageView, TranslateTransition> enemyPairs;
 
     @FXML
     public Pane gameComponents;
@@ -154,7 +156,9 @@ public class Controller {
         enemies.add(enemy25);
         enemies.add(enemy26);
         enemies.add(enemy27);
-        pairs = new HashMap<>();
+        playerPairs = new HashMap<>();
+        enemyPairs = new HashMap<>();
+        random = new Random();
         playerAnimation = new AnimationTimer() {
             @Override
             public void handle(long now) {
@@ -164,6 +168,29 @@ public class Controller {
                     final double oldX = player.getTranslateX();
                     final double newX = oldX + deltaX;
                     playerX.setValue(newX);
+                }
+                timer++;
+                if (timer % 10 == 0) {
+                    for (int i = 0; i < enemies.size(); i++) {
+                        if (random.nextInt(100) > 97) {
+                            ImageView enemyBeam = new ImageView(Controller.class.getResource("/laser.png").toString());
+                            enemyBeam.setX(-100);
+                            enemyBeam.setY(-100);
+                            gameComponents.getChildren().add(enemyBeam);
+                            TranslateTransition translateTransition = new TranslateTransition(new Duration(1000.0), enemyBeam);
+                            enemyPairs.put(enemyBeam, translateTransition);
+                            translateTransition.setFromX(enemies.get(i).getTranslateX() + enemies.get(i).getLayoutX());
+                            translateTransition.setFromY(enemies.get(i).getTranslateY() + 40 + enemies.get(i).getLayoutY());
+                            translateTransition.setToX(enemies.get(i).getTranslateX() + enemies.get(i).getLayoutX());
+                            translateTransition.setToY(enemies.get(i).getTranslateY() + 800 + enemies.get(i).getLayoutY());
+                            translateTransition.play();
+                            translateTransition.setOnFinished((actionEvent) -> {
+                                enemyPairs.remove(translateTransition.getNode());
+                                gameComponents.getChildren().remove(enemyBeam);
+                            });
+                        }
+                    }
+                    timer = 0;
                 }
                 lastUpdateTime.set(now);
                 checkForCollision();
@@ -184,15 +211,15 @@ public class Controller {
             ImageView beam = new ImageView(Controller.class.getResource("/beam.png").toString());
             gameComponents.getChildren().add(beam);
             TranslateTransition translateTransition = new TranslateTransition(new Duration(1000.0), beam);
-            pairs.put(beam, translateTransition);
+            playerPairs.put(beam, translateTransition);
             translateTransition.setFromX(player.getTranslateX() + player.getLayoutX());
             translateTransition.setFromY(player.getTranslateY() - 40 + player.getLayoutY());
             translateTransition.setToX(player.getTranslateX() + player.getLayoutX());
             translateTransition.setToY(player.getTranslateY() - 800 + player.getLayoutY());
             translateTransition.play();
             translateTransition.setOnFinished((actionEvent) -> {
-                pairs.remove(translateTransition.getNode());
-                gameComponents.getChildren().removeAll(beam);
+                playerPairs.remove(translateTransition.getNode());
+                gameComponents.getChildren().remove(beam);
             });
         }
     }
@@ -207,9 +234,9 @@ public class Controller {
         boolean flag = false;
         label:
         for (int i = 0; i < enemies.size(); i++) {
-            for (ImageView imageView : pairs.keySet()) {
+            for (ImageView imageView : playerPairs.keySet()) {
                 if (imageView.getBoundsInParent().intersects(enemies.get(i).getBoundsInParent())) {
-                    pairs.get(imageView).stop();
+                    playerPairs.get(imageView).stop();
                     gameComponents.getChildren().remove(imageView);
                     gameComponents.getChildren().remove(enemies.get(i));
                     imageViewToRemove = imageView;
@@ -221,8 +248,25 @@ public class Controller {
         }
 
         if (flag == true) {
-            pairs.remove(imageViewToRemove);
+            playerPairs.remove(imageViewToRemove);
             enemies.remove(integerToRemove);
+        }
+
+        for (ImageView imageView : enemyPairs.keySet()) {
+            if (imageView.getBoundsInParent().intersects(player.getBoundsInParent())) {
+                enemyPairs.get(imageView).stop();
+                playerAnimation.stop();
+                Alert gameOver = new Alert(Alert.AlertType.INFORMATION);
+                gameOver.setTitle("Game Over");
+                gameOver.setHeaderText(null);
+                gameOver.setContentText("Oh no, you failed to save the galaxy!");
+                gameOver.setX(player.getLayoutX() + 250);
+                gameOver.setY(player.getLayoutY() - 250);
+                gameOver.show();
+                gameOver.setOnCloseRequest((event -> {
+                    Platform.exit();
+                }));
+            }
         }
 
         if (enemies.size() == 0) {
