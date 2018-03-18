@@ -179,10 +179,10 @@ public class Controller {
                             gameComponents.getChildren().add(enemyBeam);
                             TranslateTransition translateTransition = new TranslateTransition(new Duration(1000.0), enemyBeam);
                             enemyPairs.put(enemyBeam, translateTransition);
-                            translateTransition.setFromX(enemies.get(i).getTranslateX() + enemies.get(i).getLayoutX());
-                            translateTransition.setFromY(enemies.get(i).getTranslateY() + 40 + enemies.get(i).getLayoutY());
-                            translateTransition.setToX(enemies.get(i).getTranslateX() + enemies.get(i).getLayoutX());
-                            translateTransition.setToY(enemies.get(i).getTranslateY() + 800 + enemies.get(i).getLayoutY());
+                            translateTransition.setFromX(enemies.get(i).getTranslateX() + enemies.get(i).getLayoutX() + 100);
+                            translateTransition.setFromY(enemies.get(i).getTranslateY() + 40 + enemies.get(i).getLayoutY() + 100);
+                            translateTransition.setToX(enemies.get(i).getTranslateX() + enemies.get(i).getLayoutX() + 100);
+                            translateTransition.setToY(enemies.get(i).getTranslateY() + 800 + enemies.get(i).getLayoutY() + 100);
                             translateTransition.play();
                             translateTransition.setOnFinished((actionEvent) -> {
                                 enemyPairs.remove(translateTransition.getNode());
